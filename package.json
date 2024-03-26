@@ -6,6 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec npx ts-node ./src/index.ts",
+    "build": "rm -rf dist && npx tsc",
     "create:db:migrate": "npx sequelize-cli migration:generate --name "
   },
   "keywords": [],

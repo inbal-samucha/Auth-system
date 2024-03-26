@@ -1,24 +1,24 @@
+import { InferAttributes, InferCreationAttributes } from "sequelize";
 import { AllowNull, AutoIncrement, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
+
 
 enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
 }
 
-@Table({ timestamps: true})
-export class User extends Model<User> {
+@Table({ timestamps: true, underscored: true})
+export class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
   @AutoIncrement
   @PrimaryKey
   @Column ({ type: DataType.NUMBER})
-  id!: number;
+  id!: number | null;
 
-  @AllowNull(false)
   @Column ({ type: DataType.STRING})
-  firstName!: string;
+  firstName!: string | null ;
 
-  @AllowNull(false)
   @Column ({ type: DataType.STRING})
-  lastName!: string;
+  lastName!: string | null;
 
   @Index
   @Unique
@@ -31,22 +31,22 @@ export class User extends Model<User> {
   password!: string;
 
   @Column ({ type: DataType.STRING })
-  phone!: string;
+  phone!: string | null;
 
   @AllowNull(false)
   @Column({ type: DataType.ENUM , values: Object.values(UserRole), defaultValue: UserRole.USER})
-  role!: string;
+  role!: string | null;
 
   @Column ({ type: DataType.STRING })
-  resetToken!: string;
+  resetToken!: string | null;
 
   @Column ({ type: DataType.DATE })
-  resetTokenExpiration!: Date;
+  resetTokenExpiration!: Date | null;
 
   @Column ({ type: DataType.DATE })
-  createdAt!: Date;
+  createdAt!: Date | null;
 
   @Column ({ type: DataType.DATE })
-  updatedAt!: Date;
+  updatedAt!: Date | null;
 }
 

@@ -1,13 +1,15 @@
 import express from 'express';
 import { connectToDatabase } from './db/connection';
+import { apiRoutes } from './api/routes';
 
-// Initialize Express app
+const port = process.env.PORT || 3000;
+
 const app = express();
 
-// Define routes, middleware, etc.
+app.use(express.json());
 
-// Start the server
-const port = process.env.PORT || 3000;
+app.use('/api', apiRoutes);
+
 app.listen(port, async () => {
   try {
     // Connect to the database

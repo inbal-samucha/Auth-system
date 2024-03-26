@@ -1,5 +1,8 @@
-import { Sequelize, Options } from 'sequelize';
+import { Options } from 'sequelize';
+import { Sequelize } from 'sequelize-typescript';
+
 import config from './config/config';
+import { User } from './models/User';
 
 const env = process.env.NODE_ENV || 'development';
 const sequelizeConfig = config[env];
@@ -13,14 +16,15 @@ export async function connectToDatabase(): Promise<Sequelize> {
       sequelize = new Sequelize(process.env[sequelizeConfig.use_env_variable] || '', sequelizeConfig as Options);
     } else {
       sequelize = new Sequelize(
-        sequelizeConfig.database,
-        sequelizeConfig.username,
-        sequelizeConfig.password,
-        {
-          dialect: sequelizeConfig.dialect,
-          host: sequelizeConfig.host,
-          port: sequelizeConfig.port,
-        }
+        {  
+        dialect: sequelizeConfig.dialect,
+        host: sequelizeConfig.host ,
+        username: sequelizeConfig.username ,
+        password: sequelizeConfig.password ,
+        database: sequelizeConfig.database,
+        logging: false,
+        models: [User]
+      }
       );
     }
 
