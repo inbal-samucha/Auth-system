@@ -1,5 +1,6 @@
 import { InferAttributes, InferCreationAttributes } from "sequelize";
-import { AllowNull, AutoIncrement, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
+import bcrypt from 'bcryptjs';
+import { AllowNull, AutoIncrement, BeforeCreate, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
 
 
 enum UserRole {
@@ -48,5 +49,14 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
 
   @Column ({ type: DataType.DATE })
   updatedAt!: Date | null;
+
+  @BeforeCreate({})
+  static async hashPassword(instance: User){
+    instance.password = await bcrypt.hash(instance.password, 12);
+  }
+
+  static async comparePasswords(password: string, hashedPassword: string){
+    return await bcrypt.compare(password, hashedPassword);
+  }
 }
 
