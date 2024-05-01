@@ -1,7 +1,7 @@
 import express from 'express';
-import { connectToDatabase } from './db/connection';
 import { apiRoutes } from './api/routes';
 import cookieParser from 'cookie-parser';
+import connection, { connectToDatabase } from './db/connection';
 
 const port = process.env.PORT || 3000;
 
@@ -11,6 +11,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use('/api', apiRoutes);
+
 
 app.listen(port, async () => {
   try {

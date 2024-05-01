@@ -3,6 +3,7 @@ import { Sequelize } from 'sequelize-typescript';
 
 import config from './config/config';
 import { User } from './models/User';
+import { Metadata } from './models/Metadata';
 
 const env = process.env.NODE_ENV || 'development';
 const sequelizeConfig = config[env];
@@ -23,7 +24,7 @@ export async function connectToDatabase(): Promise<Sequelize> {
         password: sequelizeConfig.password ,
         database: sequelizeConfig.database,
         logging: false,
-        models: [User]
+        models: [User, Metadata]
       }
       );
     }
