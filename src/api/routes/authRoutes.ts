@@ -40,6 +40,7 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
 
   const ACCESS_TOKEN_EXPIRES_IN = access_token_expires?.value;
   const REFRESH_TOKEN_EXPIRES_IN = refresh_token_expires?.value;
+  
 
   if (ACCESS_TOKEN_EXPIRES_IN === undefined || REFRESH_TOKEN_EXPIRES_IN === undefined) {
     throw new Error('Could not fetch access or refresh token expiration time from the database');

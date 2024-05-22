@@ -1,8 +1,10 @@
 import express from 'express';
 import { apiRoutes } from './api/routes';
 import cookieParser from 'cookie-parser';
-import connection, { connectToDatabase } from './db/connection';
+import { connectToDatabase } from './db/connection';
 
+
+//TODO: split files to app.ts for express server configuration and index.ts to start the server https://medium.com/@xiaominghu19922/proper-error-handling-in-express-server-with-typescript-8cd4ffb67188
 const port = process.env.PORT || 3000;
 
 const app = express();
