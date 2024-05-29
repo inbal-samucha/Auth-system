@@ -1,7 +1,9 @@
-import { NextFunction, Request, Response } from 'express';
-import { verifyJwt } from '../../../utils/jwt';
 import { JwtPayload } from 'jsonwebtoken';
+import { NextFunction, Request, Response } from 'express';
+
+import { verifyJwt } from '../../../utils/jwt';
 import { User } from '../../../db/models/User';
+import BadRequestError from '../../../errors/BadRequestError';
 
 //TODO: move it to external file
 declare module "express" { 
@@ -17,7 +19,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     const decodedToken: string |JwtPayload = await verifyJwt(token, 'accessTokenPublicKey');
     
     if(!decodedToken){
-      throw new Error('token is expired please login again');
+      throw new BadRequestError({code: 400, message: "token is expired please login again", logging: true});
     }
     
     req.userId = typeof decodedToken === 'string' ? decodedToken : decodedToken.sub;
@@ -34,7 +36,7 @@ export const authorizeUser = (requiredRole: string) => async (req: Request, res:
     const user = await User.findByPk(req.userId);
 
     if(!user){
-      throw new Error('user is not found');
+      throw new BadRequestError({code: 400, message: "user is not found", logging: true});
     }
     
     if (user.role !== requiredRole) {

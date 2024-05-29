@@ -1,19 +1,24 @@
 import express, { Request, Response } from 'express';
+
 import { User } from '../../db/models/User';
 import { SignTokens } from '../../utils/jwt';
-// import { accessTokenCookieOptions, refreshTokenCookieOptions } from '../../utils/cookieOptions';
 import { Metadata } from '../../db/models/Metadata';
 import { cookiesOptions } from '../../utils/cookieOptions';
+import BadRequestError from '../../errors/BadRequestError';
 
 const authRoutes = express.Router();
 
 authRoutes.post('/register', async (req: Request, res: Response) => {
   const { email, password } = req.body;
 
+  if(!email || !password) {
+    throw new BadRequestError({code: 400, message: "email and password is required!", logging: true});
+  }
+
   const exsistUser = await User.findOne({ where: { email }});
 
   if(exsistUser){
-    throw new Error('User is already exsist');
+    throw new BadRequestError({code: 400, message: "User is already exsist", logging: true});
   }
 
   const user = await User.create({ email, password })
@@ -27,7 +32,7 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
   const user = await User.findOne( { where: { email }});
 
   if(!user || !(await User.comparePasswords(password, user.password))){
-    throw new Error('Invalid email or password');
+    throw new BadRequestError({code: 400, message: "Invalid email or password", logging: true});
   }
 
 
@@ -43,7 +48,7 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
   
 
   if (ACCESS_TOKEN_EXPIRES_IN === undefined || REFRESH_TOKEN_EXPIRES_IN === undefined) {
-    throw new Error('Could not fetch access or refresh token expiration time from the database');
+    throw new BadRequestError({code: 400, message: "Could not fetch access or refresh token expiration time from the database", logging: true});
   }
   
   res.cookie('access_token', access_token, {

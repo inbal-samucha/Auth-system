@@ -1,5 +1,5 @@
-import { InferAttributes, InferCreationAttributes } from "sequelize";
 import bcrypt from 'bcryptjs';
+import { InferAttributes, InferCreationAttributes } from "sequelize";
 import { AllowNull, AutoIncrement, BeforeCreate, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
 
 

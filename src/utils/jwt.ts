@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import jwt, { SignOptions } from 'jsonwebtoken';
+
 import { User } from '../db/models/User';
 import { Metadata } from '../db/models/Metadata';
 

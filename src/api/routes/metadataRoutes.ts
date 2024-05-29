@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+
 import { Metadata } from '../../db/models/Metadata';
 
 const metadataRoutes = express.Router();

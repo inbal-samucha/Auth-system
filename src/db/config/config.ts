@@ -1,5 +1,4 @@
 import * as dotenv from 'dotenv';
-import { User } from '../models/User';
 dotenv.config();
 
 interface CustomSequelizeOptions {

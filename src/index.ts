@@ -1,7 +1,10 @@
 import express from 'express';
-import { apiRoutes } from './api/routes';
+import "express-async-errors";
 import cookieParser from 'cookie-parser';
+
+import { apiRoutes } from './api/routes';
 import { connectToDatabase } from './db/connection';
+import { errorHandler } from './api/controllers/middleware/errorHandler';
 
 
 //TODO: split files to app.ts for express server configuration and index.ts to start the server https://medium.com/@xiaominghu19922/proper-error-handling-in-express-server-with-typescript-8cd4ffb67188
@@ -14,6 +17,7 @@ app.use(express.json());
 
 app.use('/api', apiRoutes);
 
+app.use(errorHandler);
 
 app.listen(port, async () => {
   try {
