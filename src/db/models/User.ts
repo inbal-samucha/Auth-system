@@ -44,6 +44,9 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   @Column ({ type: DataType.DATE })
   resetTokenExpiration!: Date | null;
 
+  @Column({ type: DataType.ARRAY(DataType.TEXT)})
+  refreshToken!: string[] | null;
+
   @Column ({ type: DataType.DATE })
   createdAt!: Date | null;
 

@@ -33,7 +33,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 
 export const authorizeUser = (requiredRole: string) => async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await User.findByPk(req.userId);
+    const user = await User.findByPk(req.userId); //TODO: Change the role of the user so that it appears in the token (decoded.user_name, decoded.role)
 
     if(!user){
       throw new BadRequestError({code: 400, message: "user is not found", logging: true});
