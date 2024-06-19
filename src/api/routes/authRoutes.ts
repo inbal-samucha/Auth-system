@@ -7,6 +7,8 @@ import { User } from '../../db/models/User';
 import { SignTokens, verifyJwt } from '../../utils/jwt';
 import BadRequestError from '../../errors/BadRequestError';
 import { cookiesOptions, getExpiresIn } from '../../utils/cookieOptions';
+import Unauthorized from '../../errors/Unauthorized';
+import Forbidden from '../../errors/Forbidden';
 
 
 
@@ -83,15 +85,15 @@ if (cookies?.refresh_token) {
       2) RT is stolen
       3) If 1 & 2, reuse detection is needed to clear all RTs when user logs in
   */
-  // const refreshToken = cookies.refresh_token;
-  // const foundToken = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
+  const refreshToken = cookies.refresh_token;
+  const foundToken = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
 
-  // // Detected refresh token reuse!
-  // if (!foundToken) {
-  //     console.log('attempted refresh token reuse at login!')
-  //     // clear out ALL previous refresh tokens
-  //     newRefreshTokenArray = [];
-  // }
+  // Detected refresh token reuse!
+  if (!foundToken) {
+      console.log('attempted refresh token reuse at login!')
+      // clear out ALL previous refresh tokens
+      newRefreshTokenArray = [];
+  }
 
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
 }
@@ -125,7 +127,7 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
   //if !cookie.refresh_token return 401 unauthorized
   const cookies = req.cookies;
   if(!cookies?.refresh_token){
-    return res.sendStatus(401) //Not authorized
+    throw new Unauthorized({code: 401, message: "token is expired please login again", logging: true});
   }
 
   //save refresh token in variable and clear the cookie.refresh_token
@@ -149,10 +151,10 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
         console.log(result);
       }
 
-    return res.sendStatus(403); //Forbidden
+    throw new Forbidden({code: 403, message: "Forbidden", logging: true});
 
     }catch (err){
-      return res.sendStatus(403) //Forbidden
+      throw new Forbidden({code: 403, message: "Forbidden", logging: true});
     }
 
   }
@@ -174,7 +176,7 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
     await foundUser.save()
 
     // Creates Secure Cookie with refresh token
-    res.cookie('access_token', access_token, {
+    res.cookie('access_token', access_token, { //TODO: HAndle how to clear access token from cookies
       ...cookiesOptions, 
       maxAge: 24 * 60 * 60 * 1000
     });
@@ -193,9 +195,31 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
     const result = await foundUser.save();
     console.log(result);
 
-    return res.sendStatus(403);
+    throw new Forbidden({code: 403, message: "Forbidden", logging: true});
   }
 
+});
+
+authRoutes.get('/logout', async (req: Request, res: Response) => {
+  const cookie = req.cookies;
+  if(!cookie?.refresh_token) return res.sendStatus(404);
+
+  const refreshToken = cookie.refresh_token;
+
+  //Is refresh token in db?
+  const foundUser = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
+  if(!foundUser){
+    res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
+    return res.sendStatus(204);
+  }
+
+      // Delete refreshToken in db
+    foundUser.refreshToken = (foundUser.refreshToken || []).filter(rt => rt !== refreshToken);;
+    const result = await foundUser.save();
+    console.log(result);
+
+    res.clearCookie('jwt', { httpOnly: true, sameSite: 'none', secure: true });
+    res.sendStatus(204);
 });
 
 export { authRoutes };
