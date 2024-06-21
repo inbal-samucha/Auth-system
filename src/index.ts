@@ -3,6 +3,7 @@ import "express-async-errors";
 import cookieParser from 'cookie-parser';
 
 import { apiRoutes } from './api/routes';
+import sendMail from './utils/EmailProvider';
 import { connectToDatabase } from './db/connection';
 import { errorHandler } from './api/controllers/middleware/errorHandler';
 
@@ -15,12 +16,15 @@ app.use(cookieParser());
 
 app.use(express.json());
 
+
 app.use('/api', apiRoutes);
 
 app.use(errorHandler);
 
 app.listen(port, async () => {
   try {
+    // Use the sendEmail method
+await sendMail('inbalsam2014@gmail.com', 'Welcome!', 'welcome', { userName: 'John Doe' });
     // Connect to the database
     await connectToDatabase();
     console.log('Connected to the database.');
