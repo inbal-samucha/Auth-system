@@ -1,25 +1,7 @@
-import express from 'express';
-import "express-async-errors";
-import cookieParser from 'cookie-parser';
-
-import { apiRoutes } from './api/routes';
-import sendMail from './utils/EmailProvider';
+import app from './app';
 import { connectToDatabase } from './db/connection';
-import { errorHandler } from './api/controllers/middleware/errorHandler';
 
-
-//TODO: split files to app.ts for express server configuration and index.ts to start the server https://medium.com/@xiaominghu19922/proper-error-handling-in-express-server-with-typescript-8cd4ffb67188
 const port = process.env.PORT || 3000;
-
-const app = express();
-app.use(cookieParser());
-
-app.use(express.json());
-
-
-app.use('/api', apiRoutes);
-
-app.use(errorHandler);
 
 app.listen(port, async () => {
   try {
