@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import parsePhoneNumber  from 'libphonenumber-js';
 import { InferAttributes, InferCreationAttributes } from "sequelize";
-import { AllowNull, AutoIncrement, BeforeCreate, BeforeUpdate, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
+import { AllowNull, AutoIncrement, BeforeCreate, BeforeUpdate, Column, DataType, Index, Is, IsEmail, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
 import BadRequestError from '../../errors/BadRequestError';
 
 
@@ -9,6 +9,8 @@ enum UserRole {
   ADMIN = 'admin',
   USER = 'user',
 }
+
+const EMAIL_REGEX =  /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 @Table({ timestamps: true, underscored: true})
 export class User extends Model<InferAttributes<User>, InferCreationAttributes<User>> {
@@ -33,14 +35,19 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   @Index
   @Unique
   @AllowNull(false)
-  @Column ({ type: DataType.STRING}) //TODO: validate it is right syntax of email
+  @Is('validateEmail', (value) => {
+    if(!EMAIL_REGEX.test(value)){
+      throw new Error(`${value} incorrect email syntax`);
+    }
+  })
+  @Column ({ type: DataType.STRING}) 
   email!: string;
 
   @AllowNull(false)
   @Column ({ type: DataType.STRING})
   password!: string;
 
-  @Column ({ type: DataType.STRING }) //TODO: change the phone to universal like +972 948484
+  @Column ({ type: DataType.STRING }) 
   phone!: string | null;
 
   @AllowNull(false)
