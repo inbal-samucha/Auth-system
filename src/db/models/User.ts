@@ -1,6 +1,8 @@
 import bcrypt from 'bcryptjs';
+import parsePhoneNumber  from 'libphonenumber-js';
 import { InferAttributes, InferCreationAttributes } from "sequelize";
-import { AllowNull, AutoIncrement, BeforeCreate, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
+import { AllowNull, AutoIncrement, BeforeCreate, BeforeUpdate, Column, DataType, Index, Model, PrimaryKey, Table, Unique } from "sequelize-typescript";
+import BadRequestError from '../../errors/BadRequestError';
 
 
 enum UserRole {
@@ -63,6 +65,21 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   @BeforeCreate({})
   static async hashPassword(instance: User){
     instance.password = await bcrypt.hash(instance.password, 12);
+  }
+
+  @BeforeUpdate({})
+  static async formatPhone (instance: User){
+    const updatedAttributes = instance.changed();
+
+    if(updatedAttributes && Array.isArray(updatedAttributes) && updatedAttributes.includes('phone')){
+      const phoneNumber = parsePhoneNumber(instance.phone!, 'IL');
+
+      if(!phoneNumber){
+        throw new BadRequestError({ code: 400, message: "Cannot update phone number", logging: true })
+      }
+
+      instance.phone = phoneNumber!.number;
+    }
   }
 
   static async comparePasswords(password: string, hashedPassword: string){

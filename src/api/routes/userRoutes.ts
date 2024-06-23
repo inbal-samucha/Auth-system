@@ -11,7 +11,7 @@ userRoutes.patch('/update', async (req: Request, res: Response) => {
 
     const user = await User.findOne({ 
       where: { id: req.userId },
-      attributes: { exclude: ['refreshToken', 'password', 'resetToken', 'resetTokenExpiration'] }
+      attributes: { exclude: ['refreshToken', 'password', 'resetToken', 'resetTokenExpiration']}
     });
 
     if (!user) {
@@ -21,7 +21,7 @@ userRoutes.patch('/update', async (req: Request, res: Response) => {
     if (phone) user.phone = phone;
     if (firstName) user.firstName = firstName;
     if (lastName) user.lastName = lastName;
-    
+
     await user.save();
   
     res.send(user);
