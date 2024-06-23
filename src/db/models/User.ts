@@ -31,14 +31,14 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   @Index
   @Unique
   @AllowNull(false)
-  @Column ({ type: DataType.STRING})
+  @Column ({ type: DataType.STRING}) //TODO: validate it is right syntax of email
   email!: string;
 
   @AllowNull(false)
   @Column ({ type: DataType.STRING})
   password!: string;
 
-  @Column ({ type: DataType.STRING })
+  @Column ({ type: DataType.STRING }) //TODO: change the phone to universal like +972 948484
   phone!: string | null;
 
   @AllowNull(false)
