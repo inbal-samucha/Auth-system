@@ -4,21 +4,22 @@ import express, { Request, Response } from 'express';
 
 import { User } from '../../db/models/User';
 
+import Forbidden from '../../errors/Forbidden';
+import sendMail from '../../utils/EmailProvider';
+import Unauthorized from '../../errors/Unauthorized';
 import { SignTokens, verifyJwt } from '../../utils/jwt';
 import BadRequestError from '../../errors/BadRequestError';
 import { cookiesOptions, getExpiresIn } from '../../utils/cookieOptions';
-import Unauthorized from '../../errors/Unauthorized';
-import Forbidden from '../../errors/Forbidden';
 
 
 
 const authRoutes = express.Router();
 
 authRoutes.post('/register', async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { email, password, firstName, lastName } = req.body;
 
-  if(!email || !password) {
-    throw new BadRequestError({code: 400, message: "email and password is required!", logging: true});
+  if(!email || !password || !firstName || !lastName) {
+    throw new BadRequestError({code: 400, message: "email, password, first name and last name is required!", logging: true});
   }
 
   const exsistUser = await User.findOne({ where: { email }});
@@ -27,7 +28,9 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
     throw new BadRequestError({code: 400, message: "User is already exsist", logging: true});
   }
 
-  const user = await User.create({ email, password });
+  const user = await User.create({ email, password, firstName, lastName });
+  
+  await sendMail(user.email, 'Welcome to auth system!', 'welcome', { userName: user.fullName });
 
   const { access_token, refresh_token } = await SignTokens(user);
 

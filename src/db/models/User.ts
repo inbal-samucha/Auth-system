@@ -15,11 +15,18 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   @Column ({ type: DataType.NUMBER})
   id!: number | null;
 
+  @AllowNull(false)
   @Column ({ type: DataType.STRING})
   firstName!: string | null ;
 
+  @AllowNull(false)
   @Column ({ type: DataType.STRING})
   lastName!: string | null;
+
+  @Column ({ type: DataType.VIRTUAL})
+  get fullName(): string | null {
+    return this.getDataValue('firstName') + ' ' + this.getDataValue('lastName')
+  }
 
   @Index
   @Unique

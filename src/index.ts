@@ -23,8 +23,6 @@ app.use(errorHandler);
 
 app.listen(port, async () => {
   try {
-    // Use the sendEmail method
-await sendMail('inbalsam2014@gmail.com', 'Welcome!', 'welcome', { userName: 'John Doe' });
     // Connect to the database
     await connectToDatabase();
     console.log('Connected to the database.');

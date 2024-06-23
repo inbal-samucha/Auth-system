@@ -12,7 +12,7 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER,
       },
-      first_name: {
+      first_name: { // TODO: allowNull: false
         type: Sequelize.DataTypes.STRING,
       },
       last_name: {
