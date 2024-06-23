@@ -21,8 +21,8 @@ export const SignTokens = async (user: User) => {
 
   const { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = await getExpiresIn();
 
-  const access_token = signJwt({sub: user.id}, 'accessTokenPrivateKey', { expiresIn: `${ACCESS_TOKEN_EXPIRES_IN}m`});
-  const refresh_token  = signJwt({sub: user.id}, 'refreshTokenPrivateKey', { expiresIn: `${REFRESH_TOKEN_EXPIRES_IN}m`});
+  const access_token = signJwt({sub: user.id, role: user.role}, 'accessTokenPrivateKey', { expiresIn: `${ACCESS_TOKEN_EXPIRES_IN}m`});
+  const refresh_token  = signJwt({sub: user.id, role: user.role}, 'refreshTokenPrivateKey', { expiresIn: `${REFRESH_TOKEN_EXPIRES_IN}m`});
 
   return { access_token, refresh_token };
 }

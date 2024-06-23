@@ -8,7 +8,8 @@ import BadRequestError from '../../../errors/BadRequestError';
 //TODO: move it to external file
 declare module "express" { 
   export interface Request {
-    userId?: string
+    userId?: string;
+    userRole?: string;
   }
 }
 
@@ -23,6 +24,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     }
     
     req.userId = typeof decodedToken === 'string' ? decodedToken : decodedToken.sub;
+    req.userRole = typeof decodedToken === 'string' ? decodedToken : decodedToken.role;
   
     next();
   } catch(err){
@@ -33,13 +35,8 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 
 export const authorizeUser = (requiredRole: string) => async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const user = await User.findByPk(req.userId); //TODO: Change the role of the user so that it appears in the token (decoded.user_name, decoded.role)
 
-    if(!user){
-      throw new BadRequestError({code: 400, message: "user is not found", logging: true});
-    }
-    
-    if (user.role !== requiredRole) {
+    if (req.userRole !== requiredRole) {
       return res.status(403).json({ error: 'Forbidden' });
     }
     
