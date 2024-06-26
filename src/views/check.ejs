@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reset Password</title>
+</head>
+<body>
+    <h1>Reset Password</h1>
+    <form action="/api/auth/reset-password/<%= reset_token %>" method="POST">
+        <label for="newPassword">New Password:</label>
+        <input type="password" id="newPassword" name="newPassword" required>
+        <button type="submit">Reset Password</button>
+    </form>
+</body>
+</html>

@@ -8,9 +8,10 @@ import { User } from '../../db/models/User';
 import Forbidden from '../../errors/Forbidden';
 import sendMail from '../../utils/EmailProvider';
 import Unauthorized from '../../errors/Unauthorized';
-import { SignTokens, verifyJwt } from '../../utils/jwt';
+import { SignResetToken, SignTokens, verifyJwt } from '../../utils/jwt';
 import BadRequestError from '../../errors/BadRequestError';
 import { cookiesOptions, getExpiresIn } from '../../utils/cookieOptions';
+import NotFound from '../../errors/NotFound';
 
 
 
@@ -233,6 +234,60 @@ authRoutes.get('/logout', async (req: Request, res: Response) => {
     res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     res.sendStatus(204);
 });
+
+authRoutes.post('/forgot-password', async ( req: Request, res: Response) => {
+  const { email } = req.body;
+  
+  const user = await User.findOne({ where: { email }});
+  if(!user){
+    throw new NotFound( {code: 404, message: 'email not found', logging: true});
+  }
+
+  const { reset_token } = await SignResetToken(user);
+  
+  user.resetToken = reset_token;
+  user.resetTokenExpiration = new Date(Date.now() + 3600000); //TODO fix the reset token expiration 
+  await user.save();
+
+  const resetUrl = `http://localhost:3000/api/auth/reset-password/${reset_token}`;
+
+  await sendMail(user.email, 'reset password', 'resetPassword', { userName: user.fullName, resetUrl });
+
+  res.send({ message: "a password reset link has been sent." });
+});
+
+authRoutes.get('/reset-password/:reset_token', async (req: Request, res: Response) => { //TODO: after i build the client side delete this route and handle the form in the client side
+  const { reset_token } = req.params;
+  res.render('check', { reset_token }); 
+});
+
+authRoutes.post('/reset-password/:reset_token', async ( req: Request, res: Response) => {
+  const { reset_token } = req.params;
+  const { newPassword } = req.body;
+
+  console.log(newPassword);
+  
+  const decodedToken: string |JwtPayload = await verifyJwt(reset_token, 'resetTokenPublicKey');
+
+  if(!decodedToken){
+    throw new BadRequestError({code: 400, message: "token is expired please reset token again", logging: true});
+  }
+
+  const userId = typeof decodedToken === 'string' ? decodedToken : decodedToken.sub;
+  const user = await User.findByPk(userId);
+  if(!user){
+    throw new NotFound({ code: 404, message: 'User not found', logging: true});
+  }
+
+  user.password = newPassword;
+  user.resetToken = null;
+  user.resetTokenExpiration = null;
+  await user.save();
+
+  res.send({ message: 'Password has been reset.'})
+});
+
+
 
 export { authRoutes };
 

@@ -5,7 +5,7 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import { User } from '../db/models/User';
 import { getExpiresIn } from './cookieOptions';
 
-const signJwt = (payload: Object, keyName: 'accessTokenPrivateKey' | 'refreshTokenPrivateKey',  options: SignOptions) => {
+const signJwt = (payload: Object, keyName: 'accessTokenPrivateKey' | 'refreshTokenPrivateKey' | 'resetTokenPrivateKey',  options: SignOptions) => {
   const keyPath = path.join(__dirname, 'keys', `${keyName}.pem`);
   const privateKey = fs.readFileSync(keyPath);
 
@@ -27,7 +27,16 @@ export const SignTokens = async (user: User) => {
   return { access_token, refresh_token };
 }
 
-export const verifyJwt = (token: string, keyName: 'accessTokenPublicKey' | 'refreshTokenPublicKey',  options?: SignOptions) => {
+export const SignResetToken = async (user: User) => {
+
+  const { ACCESS_TOKEN_EXPIRES_IN } = await getExpiresIn();
+
+  const reset_token = signJwt({sub: user.id, role: user.role}, 'resetTokenPrivateKey', { expiresIn: `${ACCESS_TOKEN_EXPIRES_IN}m`});
+  
+  return { reset_token };
+}
+
+export const verifyJwt = (token: string, keyName: 'accessTokenPublicKey' | 'refreshTokenPublicKey' | 'resetTokenPublicKey',  options?: SignOptions) => {
   const keyPath = path.join(__dirname, 'keys', `${keyName}.pem`);
   const publicKey = fs.readFileSync(keyPath);
 

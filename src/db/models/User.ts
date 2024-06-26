@@ -54,7 +54,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
   @Column({ type: DataType.ENUM , values: Object.values(UserRole), defaultValue: UserRole.USER})
   role!: string | null;
 
-  @Column ({ type: DataType.STRING })
+  @Column ({ type: DataType.TEXT })
   resetToken!: string | null;
 
   @Column ({ type: DataType.DATE })
@@ -86,6 +86,10 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
       }
 
       instance.phone = phoneNumber!.number;
+    }
+
+    if(updatedAttributes && Array.isArray(updatedAttributes) && updatedAttributes.includes('password')){
+      instance.password = await bcrypt.hash(instance.password, 12);
     }
   }
 
