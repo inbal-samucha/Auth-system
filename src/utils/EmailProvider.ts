@@ -13,6 +13,13 @@ interface EmailOptions {
   };
 }
 
+interface Attachment {
+  filename: string;
+  path?: string;      // Path is optional because you can also use content
+  content?: Buffer | string;  // Content can be a Buffer or a string
+  cid?: string;       // Content-ID for inline images
+}
+
 class EmailProvider {
   private transporter: any;
 
@@ -56,7 +63,7 @@ const getEmailService = (): EmailProvider => {
   return emailProviders[defaultEmailProvider]();
 };
 
-const sendMail = async (to: string, subject: string, template: string, data: object): Promise<void> => {
+const sendMail = async (to: string, subject: string, template: string, data: object, attachments?: Attachment[]): Promise<void> => {
   try{
     const emailProvider = getEmailService();
 
@@ -69,6 +76,7 @@ const sendMail = async (to: string, subject: string, template: string, data: obj
       to: to,
       subject: subject,
       html: ejsTemplate,
+      attachments
     };
 
     await emailProvider.sendMail(mailOptions);

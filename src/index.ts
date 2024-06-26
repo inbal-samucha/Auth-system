@@ -3,7 +3,6 @@ import "express-async-errors";
 import cookieParser from 'cookie-parser';
 
 import { apiRoutes } from './api/routes';
-import sendMail from './utils/EmailProvider';
 import { connectToDatabase } from './db/connection';
 import { errorHandler } from './api/controllers/middleware/errorHandler';
 

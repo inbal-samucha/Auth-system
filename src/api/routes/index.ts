@@ -6,7 +6,7 @@ import { authenticateUser, authorizeUser } from '../controllers/middleware/auth'
 
 const apiRoutes = express.Router();
 
-apiRoutes.use('/auth/users', authRoutes);
+apiRoutes.use('/auth', authRoutes);
 apiRoutes.use('/metadata', metadataRoutes);
 
 apiRoutes.get('/restrict', authenticateUser, authorizeUser('user'), (req, res) => {
