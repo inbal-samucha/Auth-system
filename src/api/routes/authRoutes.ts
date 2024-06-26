@@ -99,6 +99,7 @@ if (cookies?.refresh_token) {
   }
 
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
+  res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
 }
 
 // Saving refreshToken with current user
@@ -115,8 +116,7 @@ console.log(result);
   })
   res.cookie('refresh_token', refresh_token, {
     ...cookiesOptions,
-    maxAge: 24 * 60 * 60 * 1000 //TODO: check if to chang eto expires, if yes after REFRESH_TOKEN_EXPIRES_IN the ccokie disapired
-    // expires: new Date(Date.now() + parseInt(REFRESH_TOKEN_EXPIRES_IN!) * 60 * 1000)
+    maxAge: 24 * 60 * 60 * 1000 
   });
  
   res.send({success: 'success '})
@@ -136,6 +136,7 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
   //save refresh token in variable and clear the cookie.refresh_token
   const refreshToken = cookies.refresh_token;
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
+  res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
 
   const foundUser = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
 
@@ -179,14 +180,14 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
     await foundUser.save()
 
     // Creates Secure Cookie with refresh token
-    res.cookie('access_token', access_token, { //TODO: HAndle how to clear access token from cookies
+    res.cookie('access_token', access_token, { 
       ...cookiesOptions, 
       maxAge: 24 * 60 * 60 * 1000
     });
 
     res.cookie('refresh_token', refresh_token, {
       ...cookiesOptions,
-      maxAge: 24 * 60 * 60 * 1000 //TODO: check if to chang eto expires, if yes after REFRESH_TOKEN_EXPIRES_IN the ccokie disapired
+      maxAge: 24 * 60 * 60 * 1000 
     });
 
 
@@ -213,6 +214,7 @@ authRoutes.get('/logout', async (req: Request, res: Response) => {
   const foundUser = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
   if(!foundUser){
     res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
+    res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     return res.sendStatus(204);
   }
 
@@ -221,7 +223,8 @@ authRoutes.get('/logout', async (req: Request, res: Response) => {
     const result = await foundUser.save();
     console.log(result);
 
-    res.clearCookie('jwt', { httpOnly: true, sameSite: 'none', secure: true });
+    res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
+    res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     res.sendStatus(204);
 });
 

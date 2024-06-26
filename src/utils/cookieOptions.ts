@@ -12,7 +12,6 @@ if (process.env.NODE_ENV === 'production') cookiesOptions.secure = true;
 
 export const getExpiresIn = async() => {
 
-    //TODO: move token expires in logic to cookieOptions file
     const access_token_expires = await Metadata.findOne({ where: { key: 'access_token_expires_in'}});
     const refresh_token_expires = await Metadata.findOne({ where: { key: 'refresh_token_expires_in'}});
     
