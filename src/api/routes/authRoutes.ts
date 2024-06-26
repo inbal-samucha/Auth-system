@@ -1,3 +1,4 @@
+import path from 'path';
 import { Op } from 'sequelize';
 import { JwtPayload } from 'jsonwebtoken';
 import express, { Request, Response } from 'express';
@@ -30,7 +31,12 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
 
   const user = await User.create({ email, password, firstName, lastName });
   
-  await sendMail(user.email, 'Welcome to auth system!', 'welcome', { userName: user.fullName });
+  const attachments = [{
+    filename: 'welcome.jpeg',
+    path: path.join(__dirname, `../../views/assets/welcome.jpeg`),
+    cid: 'welcomeImage'
+  }]
+  await sendMail(user.email, 'welcome', 'welcome', {userName: user.fullName, imageCid: 'welcomeImage'}, attachments)
 
   const { access_token, refresh_token } = await SignTokens(user);
 
