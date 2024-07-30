@@ -5,6 +5,13 @@ import BadRequestError from '../../errors/BadRequestError';
 
 const userRoutes = express.Router();
 
+userRoutes.get('/', async (req: Request, res: Response) => {
+  console.log('innn');
+  
+  const users = await User.findAll({});
+  res.send(users);
+});
+
 userRoutes.patch('/update', async (req: Request, res: Response) => {
 
     const { phone, firstName, lastName } = req.body;
@@ -27,5 +34,6 @@ userRoutes.patch('/update', async (req: Request, res: Response) => {
     res.send(user);
 
 });
+
 
 export { userRoutes };

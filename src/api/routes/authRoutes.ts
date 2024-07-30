@@ -19,7 +19,8 @@ const authRoutes = express.Router();
 
 authRoutes.post('/register', async (req: Request, res: Response) => {
   const { email, password, firstName, lastName } = req.body;
-
+  console.log(req.body);
+  
   if(!email || !password || !firstName || !lastName) {
     throw new BadRequestError({code: 400, message: "email, password, first name and last name is required!", logging: true});
   }
@@ -39,18 +40,18 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
   }]
   await sendMail(user.email, 'welcome', 'welcome', {userName: user.fullName, imageCid: 'welcomeImage'}, attachments)
 
-  const { access_token, refresh_token } = await SignTokens(user);
+  // const { access_token, refresh_token } = await SignTokens(user);
 
-  const { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = await getExpiresIn();
+  // const { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = await getExpiresIn();
 
-  res.cookie('access_token', access_token, {
-    ...cookiesOptions, 
-    expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  })
-  res.cookie('refresh_token', refresh_token, {
-    ...cookiesOptions,
-    expires: new Date(Date.now() + parseInt(REFRESH_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  });
+  // res.cookie('access_token', access_token, {
+  //   ...cookiesOptions, 
+  //   expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
+  // })
+  // res.cookie('refresh_token', refresh_token, {
+  //   ...cookiesOptions,
+  //   expires: new Date(Date.now() + parseInt(REFRESH_TOKEN_EXPIRES_IN!) * 60 * 1000)
+  // });
 
   res.send(user);
 });
@@ -59,7 +60,6 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
 
 authRoutes.post('/login', async (req: Request, res: Response) => {
   const cookies = req.cookies;
-  console.log(`cookie available at login: ${JSON.stringify(cookies)}`);
 
   const { email, password } = req.body;
 
@@ -84,8 +84,7 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
       newRefreshTokenArray = user.refreshToken;
     }
   }
-  console.log('new refresh token: ', newRefreshTokenArray);
-  
+
 
 if (cookies?.refresh_token) {
 
@@ -106,27 +105,27 @@ if (cookies?.refresh_token) {
   }
 
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-  res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
+  // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
 }
 
 // Saving refreshToken with current user
 user.refreshToken = [...newRefreshTokenArray, refresh_token];
 const result = await user.save();
-console.log(result);
+
 
 // Creates Secure Cookie with refresh token
   
-  res.cookie('access_token', access_token, {
-    ...cookiesOptions, 
-    maxAge: 24 * 60 * 60 * 1000
-    // expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  })
+  // res.cookie('access_token', access_token, { //TODO: remove from cookies and pass it in res.data 
+  //   ...cookiesOptions, 
+  //   maxAge: 24 * 60 * 60 * 1000
+  //   // expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
+  // })
   res.cookie('refresh_token', refresh_token, {
     ...cookiesOptions,
     maxAge: 24 * 60 * 60 * 1000 
   });
  
-  res.send({success: 'success '})
+  res.send({success: 'success ', accessToken: access_token, role: user.role }) //TODO: change the role in model to array
 });
 
 
@@ -198,7 +197,7 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
     });
 
 
-    res.json({ access_token, refresh_token });
+    res.send({ accessToken:access_token, role: foundUser.role });
 
   } catch (err){
     console.log('expired refresh token')
@@ -213,7 +212,7 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
 
 authRoutes.get('/logout', async (req: Request, res: Response) => {
   const cookie = req.cookies;
-  if(!cookie?.refresh_token) return res.sendStatus(404);
+  if(!cookie?.refresh_token) return res.sendStatus(204);
 
   const refreshToken = cookie.refresh_token;
 
@@ -221,17 +220,19 @@ authRoutes.get('/logout', async (req: Request, res: Response) => {
   const foundUser = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
   if(!foundUser){
     res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-    res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
+    // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     return res.sendStatus(204);
   }
 
       // Delete refreshToken in db
-    foundUser.refreshToken = (foundUser.refreshToken || []).filter(rt => rt !== refreshToken);;
+    // foundUser.refreshToken = (foundUser.refreshToken || []).filter(rt => rt !== refreshToken); //TODO: check if i need this line or the next line
+    foundUser.refreshToken = [];
+
     const result = await foundUser.save();
     console.log(result);
 
     res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-    res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
+    // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     res.sendStatus(204);
 });
 

@@ -15,12 +15,18 @@ declare module "express" {
 
 export const authenticateUser = async (req: Request, res: Response, next: NextFunction) => {
   try{
-    const token = req.cookies.access_token;
     
-    const decodedToken: string |JwtPayload = await verifyJwt(token, 'accessTokenPublicKey');
+    const authHeader = req.headers.authorization || req.headers.Autherization;
+    if(typeof authHeader !== 'string' ||!authHeader?.startsWith('Bearer')) {
+      return res.sendStatus(401);
+    }
+
+    const accessToken = authHeader.split(' ')[1];
+    
+    const decodedToken: string |JwtPayload = await verifyJwt(accessToken, 'accessTokenPublicKey');
     
     if(!decodedToken){
-      throw new BadRequestError({code: 400, message: "token is expired please login again", logging: true});
+      throw new BadRequestError({code: 403, message: "token is expired please login again", logging: true});
     }
     
     req.userId = typeof decodedToken === 'string' ? decodedToken : decodedToken.sub;
@@ -29,7 +35,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
     next();
   } catch(err){
     console.error('Error authenticating user:', err);
-    res.status(401).json({ error: 'Unauthorized' });
+    res.status(403).json({ error: 'Forbidden' });
   }
 }
 
@@ -37,7 +43,7 @@ export const authorizeUser = (requiredRole: string) => async (req: Request, res:
   try {
 
     if (req.userRole !== requiredRole) {
-      return res.status(403).json({ error: 'Forbidden' });
+      return res.status(401).json({ error: 'Unauthorized' });
     }
     
     next();

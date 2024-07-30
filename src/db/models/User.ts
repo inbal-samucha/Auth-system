@@ -32,7 +32,7 @@ export class User extends Model<InferAttributes<User>, InferCreationAttributes<U
     return this.getDataValue('firstName') + ' ' + this.getDataValue('lastName')
   }
 
-  @Index
+  @Index //TODO: chae the email to lowercase
   @Unique
   @AllowNull(false)
   @Is('validateEmail', (value) => {
