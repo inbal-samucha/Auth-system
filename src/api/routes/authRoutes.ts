@@ -1,7 +1,8 @@
 import path from 'path';
-import { Op } from 'sequelize';
+import { Op, where } from 'sequelize';
 import { JwtPayload } from 'jsonwebtoken';
 import express, { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 
 import { User } from '../../db/models/User';
 
@@ -10,8 +11,9 @@ import sendMail from '../../utils/EmailProvider';
 import Unauthorized from '../../errors/Unauthorized';
 import { SignResetToken, SignTokens, verifyJwt } from '../../utils/jwt';
 import BadRequestError from '../../errors/BadRequestError';
-import { cookiesOptions, getExpiresIn } from '../../utils/cookieOptions';
+import { cookiesOptions } from '../../utils/cookieOptions';
 import NotFound from '../../errors/NotFound';
+import { getGoogleOAuthTokens, getGoogleUser } from '../../utils/oauthGoogle';
 
 
 
@@ -40,19 +42,6 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
   }]
   await sendMail(user.email, 'welcome', 'welcome', {userName: user.fullName, imageCid: 'welcomeImage'}, attachments)
 
-  // const { access_token, refresh_token } = await SignTokens(user);
-
-  // const { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = await getExpiresIn();
-
-  // res.cookie('access_token', access_token, {
-  //   ...cookiesOptions, 
-  //   expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  // })
-  // res.cookie('refresh_token', refresh_token, {
-  //   ...cookiesOptions,
-  //   expires: new Date(Date.now() + parseInt(REFRESH_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  // });
-
   res.send(user);
 });
 
@@ -71,8 +60,6 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
 
 
   const { access_token, refresh_token } = await SignTokens(user);
-
-  // const { ACCESS_TOKEN_EXPIRES_IN, REFRESH_TOKEN_EXPIRES_IN } = await getExpiresIn();
 
   // Initialize the new refresh token array
   let newRefreshTokenArray: string[] = [];
@@ -105,7 +92,6 @@ if (cookies?.refresh_token) {
   }
 
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-  // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
 }
 
 // Saving refreshToken with current user
@@ -114,12 +100,6 @@ const result = await user.save();
 
 
 // Creates Secure Cookie with refresh token
-  
-  // res.cookie('access_token', access_token, { //TODO: remove from cookies and pass it in res.data 
-  //   ...cookiesOptions, 
-  //   maxAge: 24 * 60 * 60 * 1000
-  //   // expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  // })
   res.cookie('refresh_token', refresh_token, {
     ...cookiesOptions,
     maxAge: 24 * 60 * 60 * 1000 
@@ -142,7 +122,6 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
   //save refresh token in variable and clear the cookie.refresh_token
   const refreshToken = cookies.refresh_token;
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-  res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
 
   const foundUser = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
 
@@ -186,11 +165,6 @@ authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
     await foundUser.save()
 
     // Creates Secure Cookie with refresh token
-    res.cookie('access_token', access_token, { 
-      ...cookiesOptions, 
-      maxAge: 24 * 60 * 60 * 1000
-    });
-
     res.cookie('refresh_token', refresh_token, {
       ...cookiesOptions,
       maxAge: 24 * 60 * 60 * 1000 
@@ -220,7 +194,6 @@ authRoutes.get('/logout', async (req: Request, res: Response) => {
   const foundUser = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
   if(!foundUser){
     res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-    // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     return res.sendStatus(204);
   }
 
@@ -229,10 +202,8 @@ authRoutes.get('/logout', async (req: Request, res: Response) => {
     foundUser.refreshToken = [];
 
     const result = await foundUser.save();
-    console.log(result);
 
     res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-    // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
     res.sendStatus(204);
 });
 
@@ -265,8 +236,6 @@ authRoutes.get('/reset-password/:reset_token', async (req: Request, res: Respons
 authRoutes.post('/reset-password/:reset_token', async ( req: Request, res: Response) => {
   const { reset_token } = req.params;
   const { newPassword } = req.body;
-
-  console.log(newPassword);
   
   const decodedToken: string |JwtPayload = await verifyJwt(reset_token, 'resetTokenPublicKey');
 
@@ -288,6 +257,54 @@ authRoutes.post('/reset-password/:reset_token', async ( req: Request, res: Respo
   res.send({ message: 'Password has been reset.'})
 });
 
+
+authRoutes.get('/oauth/google', async ( req: Request, res: Response) => {
+  //get the code from qs
+  const code = req.query.code as string
+
+  try{
+    //get the id and access token with the code
+    const response = await getGoogleOAuthTokens(code);
+    const id_token = response.id_token;
+    const google_access_token = response.access_token;
+    console.log( {id_token, google_access_token});
+    
+    
+    //get user with tokens
+    const google_user = await getGoogleUser(id_token, google_access_token);
+    console.log(google_user);
+
+    if(!google_user.verified_email){
+      return res.status(403). send('Google account is not verified');
+    }
+    //upsert the user
+    let user = await User.findOne({ where: { email: google_user.email}})
+    if (!user) {
+      const defaultPassword = '1234' //TODO: handle defualt password or remove the rquired password in model
+      user = await User.create({
+        email: google_user.email,
+        password: defaultPassword
+      });
+  }
+
+    //create access & refresh tokens
+    const { access_token, refresh_token } = await SignTokens(user);
+  
+    //set cookies
+    res.cookie('refresh_token', refresh_token, {
+      ...cookiesOptions,
+      maxAge: 24 * 60 * 60 * 1000 
+    });
+
+    res.send({ success: 'success',accessToken: access_token, role: user.role});
+    
+    //redirect back to client
+  }catch(err){
+    console.log(err);
+    return res.redirect('http://localhost:3001') //TODO: check what redirect config.origin Google OAuth 2.0 With NodeJS (No Passport or googleapis) 35:30
+  }
+
+});
 
 
 export { authRoutes };
