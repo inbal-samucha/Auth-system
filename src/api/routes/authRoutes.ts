@@ -13,6 +13,8 @@ import BadRequestError from '../../errors/BadRequestError';
 import { cookiesOptions, getExpiresIn } from '../../utils/cookieOptions';
 import NotFound from '../../errors/NotFound';
 
+import qs from 'qs';
+import axios from 'axios';
 
 
 const authRoutes = express.Router();
@@ -289,6 +291,56 @@ authRoutes.post('/reset-password/:reset_token', async ( req: Request, res: Respo
 });
 
 
+
+authRoutes.get('/oauth-google', async ( req: Request, res: Response) => {
+  const authUrl = 'https://accounts.google.com/o/oauth2/v2/auth?' + qs.stringify({
+    client_id: process.env.GOOGLE_CLIENT_ID,
+    redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL,
+    response_type: 'code',
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.profile',
+      'https://www.googleapis.com/auth/userinfo.email'
+    ].join(" "),
+    access_type: 'offline',
+    prompt: 'consent',
+  });
+
+  console.log("Redirect URI:", process.env.GOOGLE_OAUTH_REDIRECT_URL);
+
+  res.redirect(authUrl);
+});
+
+
+authRoutes.get('/google/callback', async ( req: Request, res: Response) => {
+
+  const { code } = req.query;
+
+  // Exchange code for tokens
+  try {
+    const response = await axios.post('https://oauth2.googleapis.com/token', qs.stringify({
+      code,
+      client_id:  process.env.GOOGLE_CLIENT_ID,
+      client_secret:  process.env.GOOGLE_CLIENT_SECRET,
+      redirect_uri:  process.env.GOOGLE_OAUTH_REDIRECT_URL,
+      grant_type: 'authorization_code',
+    }), {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+console.log(response.data);
+
+    const { access_token } = response.data;
+    console.log("Redirect URI:", process.env.GOOGLE_OAUTH_REDIRECT_URL);
+console.log('access_token ', access_token);
+
+    // Send access token to client
+    res.json({ accessToken: access_token });
+  } catch (error) {
+    console.error('Error during Google OAuth process:', error);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
+});
 
 export { authRoutes };
 
