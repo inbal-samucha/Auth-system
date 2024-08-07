@@ -296,7 +296,8 @@ authRoutes.get('/oauth/google', async ( req: Request, res: Response) => {
       maxAge: 24 * 60 * 60 * 1000 
     });
 
-    res.send({ success: 'success',accessToken: access_token, role: user.role});
+    // res.send({ success: 'success',accessToken: access_token, role: user.role});
+    res.redirect(`http://localhost:3001/oauth2/callback?accessToken=${access_token}&role=${user.role}`);
     
     //redirect back to client
   }catch(err){
