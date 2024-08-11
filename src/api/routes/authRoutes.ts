@@ -15,6 +15,7 @@ import NotFound from '../../errors/NotFound';
 
 import qs from 'qs';
 import axios from 'axios';
+import { getGoogleOAuthTokens, getGoogleUser } from '../../utils/oAuthGoogle';
 
 
 const authRoutes = express.Router();
@@ -107,7 +108,6 @@ if (cookies?.refresh_token) {
   }
 
   res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
-  // res.clearCookie('access_token', { httpOnly: true, sameSite: 'none', secure: true });
 }
 
 // Saving refreshToken with current user
@@ -116,12 +116,6 @@ const result = await user.save();
 
 
 // Creates Secure Cookie with refresh token
-  
-  // res.cookie('access_token', access_token, { //TODO: remove from cookies and pass it in res.data 
-  //   ...cookiesOptions, 
-  //   maxAge: 24 * 60 * 60 * 1000
-  //   // expires: new Date(Date.now() + parseInt(ACCESS_TOKEN_EXPIRES_IN!) * 60 * 1000)
-  // })
   res.cookie('refresh_token', refresh_token, {
     ...cookiesOptions,
     maxAge: 24 * 60 * 60 * 1000 
@@ -137,6 +131,8 @@ const result = await user.save();
 authRoutes.get('/refresh_token', async (req: Request, res: Response) => {
   //if !cookie.refresh_token return 401 unauthorized
   const cookies = req.cookies;
+  console.log('cookies in /refresh-token ', cookies);
+  
   if(!cookies?.refresh_token){
     throw new Unauthorized({code: 401, message: "token is expired please login again", logging: true});
   }
@@ -310,32 +306,86 @@ authRoutes.get('/oauth-google', async ( req: Request, res: Response) => {
   res.redirect(authUrl);
 });
 
-
 authRoutes.get('/google/callback', async ( req: Request, res: Response) => {
 
-  const { code } = req.query;
+  const code  = req.query.code as string;
 
   // Exchange code for tokens
   try {
-    const response = await axios.post('https://oauth2.googleapis.com/token', qs.stringify({
-      code,
-      client_id:  process.env.GOOGLE_CLIENT_ID,
-      client_secret:  process.env.GOOGLE_CLIENT_SECRET,
-      redirect_uri:  process.env.GOOGLE_OAUTH_REDIRECT_URL,
-      grant_type: 'authorization_code',
-    }), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-console.log(response.data);
+    const response = await getGoogleOAuthTokens(code);
+    const id_token = response.id_token;
+    const google_access_token = response.access_token;
 
-    const { access_token } = response.data;
-    console.log("Redirect URI:", process.env.GOOGLE_OAUTH_REDIRECT_URL);
-console.log('access_token ', access_token);
+    //get user with tokens
+    const google_user = await getGoogleUser(id_token, google_access_token);
 
-    // Send access token to client
-    res.json({ accessToken: access_token });
+
+    if(!google_user.verified_email){
+      return res.status(403). send('Google account is not verified');
+    }
+
+      //upsert the user
+      let user = await User.findOne({ where: { email: google_user.email}})
+      if (!user) {
+        const defaultPassword = '1234' //TODO: handle defualt password or remove the rquired password in model
+        user = await User.create({
+          email: google_user.email,
+          password: defaultPassword
+        });
+    }
+
+  const cookies = req.cookies;
+    
+     //create access & refresh tokens
+     const { access_token, refresh_token } = await SignTokens(user);
+
+     let newRefreshTokenArray: string[] = [];
+
+     if(user.refreshToken){
+       if(cookies?.refresh_token){
+         newRefreshTokenArray = user.refreshToken.filter(rt => rt !== cookies.refresh_token)
+       }else{
+         newRefreshTokenArray = user.refreshToken;
+       }
+     }
+   
+   
+   if (cookies?.refresh_token) {
+   
+     /* 
+     Scenario added here: 
+         1) User logs in but never uses RT and does not logout 
+         2) RT is stolen
+         3) If 1 & 2, reuse detection is needed to clear all RTs when user logs in
+     */
+     const refreshToken = cookies.refresh_token;
+     const foundToken = await User.findOne({ where: { refreshToken: { [Op.contains]: [refreshToken]} }});
+   
+     // Detected refresh token reuse!
+     if (!foundToken) {
+         console.log('attempted refresh token reuse at login!')
+         // clear out ALL previous refresh tokens
+         newRefreshTokenArray = [];
+     }
+   
+     res.clearCookie('refresh_token', { httpOnly: true, sameSite: 'none', secure: true });
+   }
+   
+   // Saving refreshToken with current user
+   user.refreshToken = [...newRefreshTokenArray, refresh_token];
+  await user.save();
+  console.log(user)
+
+  
+     //set cookies
+     res.cookie('refresh_token', refresh_token, {
+       ...cookiesOptions,
+       maxAge: 24 * 60 * 60 * 1000 
+     });
+ 
+
+    res.send({success: 'success ', accessToken: access_token, role: user.role }) //TODO: change the role in model to array
+
   } catch (error) {
     console.error('Error during Google OAuth process:', error);
     res.status(500).json({ error: 'Authentication failed' });

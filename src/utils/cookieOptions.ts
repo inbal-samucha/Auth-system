@@ -4,10 +4,11 @@ import { Metadata } from "../db/models/Metadata";
 
 export const cookiesOptions: CookieOptions = {
   httpOnly: true,
-  sameSite: 'lax'
+  sameSite: 'lax',
+  secure: process.env.NODE_ENV === 'production',
 };
 
-if (process.env.NODE_ENV === 'production') cookiesOptions.secure = true;
+// if (process.env.NODE_ENV === 'production') cookiesOptions.secure = true;
 
 
 export const getExpiresIn = async() => {

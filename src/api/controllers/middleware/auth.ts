@@ -23,6 +23,7 @@ export const authenticateUser = async (req: Request, res: Response, next: NextFu
 
     const accessToken = authHeader.split(' ')[1];
     
+    
     const decodedToken: string |JwtPayload = await verifyJwt(accessToken, 'accessTokenPublicKey');
     
     if(!decodedToken){
