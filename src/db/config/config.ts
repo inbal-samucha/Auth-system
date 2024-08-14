@@ -36,8 +36,6 @@ const config: Record<string, CustomSequelizeOptions> = {
   }
 };
 
-console.log('Sequelize config:', config);
-
 
 export default config ;
 

@@ -7,7 +7,7 @@
     "start": "node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec npx ts-node ./src/index.ts",
-    "build": "rm -rf dist && npx tsc && node dist/scripts/copyKeys.js",
+    "build": "rm -rf dist && npx tsc",
     "create:db:migrate": "npx sequelize-cli migration:generate --name ",
     "db:migrate": "npx sequelize-cli db:migrate"
   },
