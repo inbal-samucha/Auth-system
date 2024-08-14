@@ -64,7 +64,13 @@ authRoutes.post('/register', async (req: Request, res: Response) => {
 authRoutes.post('/login', async (req: Request, res: Response) => {
   const cookies = req.cookies;
 
+  console.log('cookies ', cookies)
+
   const { email, password } = req.body;
+
+  console.log('email ', email)
+  console.log('password ', password)
+
 
   const user = await User.findOne( { where: { email }});
 
@@ -72,6 +78,7 @@ authRoutes.post('/login', async (req: Request, res: Response) => {
     throw new BadRequestError({code: 400, message: "Invalid email or password", logging: true});
   }
 
+  console.log('user ', user)
 
   const { access_token, refresh_token } = await SignTokens(user);
 

@@ -1,6 +1,6 @@
 'use strict';
 
-// npx sequelize-cli db:migrate --url "postgres://username:password@localhost:5432/database_name"
+// npx sequelize-cli db:migrate --url $DATABASE_URL
 
 
 module.exports = {
