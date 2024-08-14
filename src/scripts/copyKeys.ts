@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-const srcDir = path.join(__dirname, '..', '..', 'src','utils', 'keys'); //"build": "rm -rf dist && npx tsc && node dist/scripts/copyKeys.js"
+const srcDir = path.join(__dirname, '..', '..','utils', 'keys'); //"build": "rm -rf dist && npx tsc && node dist/scripts/copyKeys.js"
 const destDir = path.join(__dirname, '..', '..', 'dist', 'utils', 'keys');
 
 function copyFiles(src: string, dest: string): void {
