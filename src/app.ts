@@ -17,7 +17,7 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 const corsOptions = {
-  origin: ['http://localhost:3001'],
+  origin: ['http://localhost:3001', 'https://auth-system-client.onrender.com'],
   credentials: true
 };
 app.use(cors(corsOptions))
