@@ -21,8 +21,7 @@ export async function connectToDatabase(): Promise<Sequelize> {
       }
 
       const cleanedDatabaseUrl = databaseUrl.trim();
-      console.log('Database URL:', cleanedDatabaseUrl);
-      
+
       sequelize = new Sequelize(cleanedDatabaseUrl, {
         dialect: 'postgres',
         logging: false,

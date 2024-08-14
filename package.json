@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npx sequelize-cli db:migrate && node dist/index.js",
+    "start": "npx sequelize-cli db:migrate --config ./dist/db/config/config.js && node dist/index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec npx ts-node ./src/index.ts",
     "build": "rm -rf dist && npx tsc",
