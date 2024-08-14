@@ -12,22 +12,22 @@ let sequelize: Sequelize | null = null;
 
 export async function connectToDatabase(): Promise<Sequelize> {
   if (!sequelize) {
-    if (sequelizeConfig.use_env_variable) {
-      // Handle the case where use_env_variable might be undefined
-      // sequelize = new Sequelize(process.env[sequelizeConfig.use_env_variable] || '', sequelizeConfig as Options);
-      const databaseUrl = process.env[sequelizeConfig.use_env_variable];
-      if (!databaseUrl) {
-        throw new Error(`Environment variable ${sequelizeConfig.use_env_variable} is not set`);
-      }
+    // if (sequelizeConfig.use_env_variable) {
+    //   // Handle the case where use_env_variable might be undefined
+    //   // sequelize = new Sequelize(process.env[sequelizeConfig.use_env_variable] || '', sequelizeConfig as Options);
+    //   const databaseUrl = process.env[sequelizeConfig.use_env_variable];
+    //   if (!databaseUrl) {
+    //     throw new Error(`Environment variable ${sequelizeConfig.use_env_variable} is not set`);
+    //   }
 
-      const cleanedDatabaseUrl = databaseUrl.trim();
+    //   const cleanedDatabaseUrl = databaseUrl.trim();
 
-      sequelize = new Sequelize(cleanedDatabaseUrl, {
-        dialect: 'postgres',
-        logging: false,
-        models: [User, Metadata]
-      });
-    } else {
+    //   sequelize = new Sequelize(cleanedDatabaseUrl, {
+    //     dialect: 'postgres',
+    //     logging: false,
+    //     models: [User, Metadata]
+    //   });
+    // } else {
       sequelize = new Sequelize(
         {  
         dialect: sequelizeConfig.dialect,
@@ -39,7 +39,7 @@ export async function connectToDatabase(): Promise<Sequelize> {
         models: [User, Metadata]
       }
       );
-    }
+    // }
 
     try {
       await sequelize.authenticate();

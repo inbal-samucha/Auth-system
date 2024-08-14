@@ -28,8 +28,9 @@ const config: Record<string, CustomSequelizeOptions> = {
     dialect: 'postgres'
   },
   production: {
-    use_env_variable: 'DATABASE_URL',
+    // use_env_variable: 'DATABASE_URL',
     dialect: 'postgres',
+    host: process.env.PROD_DB_HOST || 'production_host',
     database: process.env.PROD_DB_NAME || 'production_database', // Provide default or placeholder value
     username: process.env.PROD_DB_USER || 'production_username', // Provide default or placeholder value
     password: process.env.PROD_DB_PASS || 'production_password', // Provide default or placeholder value
