@@ -339,7 +339,7 @@ authRoutes.get('/google/callback', async ( req: Request, res: Response) => {
      //create access & refresh tokens
      const { access_token, refresh_token } = await SignTokens(user);
 
-     let newRefreshTokenArray: string[] = [];
+     let newRefreshTokenArray: string[] = []; //TODO: extract this logic to extarnel logic with login routes too
 
      if(user.refreshToken){
        if(cookies?.refresh_token){
@@ -374,9 +374,7 @@ authRoutes.get('/google/callback', async ( req: Request, res: Response) => {
    // Saving refreshToken with current user
    user.refreshToken = [...newRefreshTokenArray, refresh_token];
   await user.save();
-  console.log(user)
 
-  
      //set cookies
      res.cookie('refresh_token', refresh_token, {
        ...cookiesOptions,
