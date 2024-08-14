@@ -19,8 +19,12 @@ export async function connectToDatabase(): Promise<Sequelize> {
       if (!databaseUrl) {
         throw new Error(`Environment variable ${sequelizeConfig.use_env_variable} is not set`);
       }
-      sequelize = new Sequelize(databaseUrl, {
-        dialect: sequelizeConfig.dialect,
+
+      const cleanedDatabaseUrl = databaseUrl.trim();
+      console.log('Database URL:', cleanedDatabaseUrl);
+      
+      sequelize = new Sequelize(cleanedDatabaseUrl, {
+        dialect: 'postgres',
         logging: false,
         models: [User, Metadata]
       });
